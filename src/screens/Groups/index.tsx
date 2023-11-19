@@ -1,5 +1,6 @@
 import { Header } from '@components/Header'
 import { Highlight } from '@components/Highlight'
+import { GroupCard } from '@components/GroupCard'
 import * as S from './styles'
 
 export function Groups() {
@@ -10,6 +11,7 @@ export function Groups() {
         title="Turma"
         subtitle="Jogue com sua turma"
       />
+      <GroupCard title="Time UMM " />
     </S.Container>
   )
 }
