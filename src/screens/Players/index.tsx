@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { useRoute } from '@react-navigation/native'
 import { Alert, FlatList, TextInput } from 'react-native'
+import { useNavigation } from '@react-navigation/native'
 
 import { Container, Form, HeaderList, NumberPlayers } from './styles'
 import { Header } from '@components/Header'
@@ -15,6 +16,8 @@ import { AppError } from '@utils/AppError'
 import { playerAddByGroup } from '@storage/player/playerAddByGroup'
 import { playersGetByGroupAndTeam } from '@storage/player/playersGetByGroupAndTeam'
 import { PlayerStorageDTO } from '@storage/player/playerStorageDTO'
+import { playerRemoveByGroup } from '@storage/player/playerRemoveByGroup'
+import { groupRemoveByName } from '@storage/group/groupRemoveByName'
 
 type RouteParams = {
   group: string
@@ -29,6 +32,7 @@ export function Players() {
   const { group } = route.params as RouteParams
 
   const inputRef = useRef<TextInput>(null)
+  const navigation = useNavigation()
 
   useEffect(() => {
     fetchPlayerByTeam()
@@ -72,6 +76,37 @@ export function Players() {
     }
   }
 
+  const handleRemovePlayer = async (playerName: string) => {
+    try {
+      await playerRemoveByGroup(playerName, group)
+      fetchPlayerByTeam()
+    } catch (error) {
+      console.log(error)
+      Alert.alert('Remover Jogador', 'Ocorreu um erro ao remover o jogador')
+    }
+  }
+
+  const groupRemove = async () => {
+    console.log('groupRemove')
+    try {
+      await groupRemoveByName(group)
+      navigation.navigate('groups')
+    } catch (error) {
+      console.log(error)
+      Alert.alert('Remover Time', 'Ocorreu um erro ao remover o time')
+    }
+  }
+
+  const handleRemoveGroup = async () => {
+    Alert.alert('Remover Time', 'Deseja realmente remover esse time?', [
+      { text: 'Não', style: 'cancel' },
+      {
+        text: 'Sim',
+        onPress: groupRemove,
+      },
+    ])
+  }
+
   return (
     <Container>
       <Header showButton />
@@ -111,7 +146,12 @@ export function Players() {
         data={players}
         keyExtractor={(item) => item.name}
         renderItem={({ item }) => (
-          <PlayerCard name={item.name} onRemove={() => {}} />
+          <PlayerCard
+            name={item.name}
+            onRemove={() => {
+              handleRemovePlayer(item.name)
+            }}
+          />
         )}
         ListEmptyComponent={() => (
           <ListEmpty message={'Não há jogadores nesse time!'} />
@@ -123,7 +163,11 @@ export function Players() {
         ]}
       />
 
-      <Button title="Remover Time" styleProps="DANGER" />
+      <Button
+        title="Remover Time"
+        styleProps="DANGER"
+        onPress={handleRemoveGroup}
+      />
     </Container>
   )
 }
