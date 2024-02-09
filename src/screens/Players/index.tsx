@@ -18,12 +18,14 @@ import { playersGetByGroupAndTeam } from '@storage/player/playersGetByGroupAndTe
 import { PlayerStorageDTO } from '@storage/player/playerStorageDTO'
 import { playerRemoveByGroup } from '@storage/player/playerRemoveByGroup'
 import { groupRemoveByName } from '@storage/group/groupRemoveByName'
+import { Loading } from '@components/Loading'
 
 type RouteParams = {
   group: string
 }
 
 export function Players() {
+  const [loading, setLoading] = useState<boolean>(true)
   const [newPlayerName, setNewPlayerName] = useState<string>('')
   const [team, setTeam] = useState<string>('TIME A')
   const [players, setPlayers] = useState<PlayerStorageDTO[]>([])
@@ -40,6 +42,7 @@ export function Players() {
 
   const fetchPlayerByTeam = async () => {
     try {
+      setLoading(true)
       const playerByTeam = await playersGetByGroupAndTeam(group, team)
       setPlayers(playerByTeam)
     } catch (error) {
@@ -48,6 +51,8 @@ export function Players() {
         'Jogadores',
         'Ocorreu um erro ao buscar os jogadores do time selecionado'
       )
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -87,7 +92,6 @@ export function Players() {
   }
 
   const groupRemove = async () => {
-    console.log('groupRemove')
     try {
       await groupRemoveByName(group)
       navigation.navigate('groups')
@@ -142,26 +146,30 @@ export function Players() {
         <NumberPlayers>{players.length}</NumberPlayers>
       </HeaderList>
 
-      <FlatList
-        data={players}
-        keyExtractor={(item) => item.name}
-        renderItem={({ item }) => (
-          <PlayerCard
-            name={item.name}
-            onRemove={() => {
-              handleRemovePlayer(item.name)
-            }}
-          />
-        )}
-        ListEmptyComponent={() => (
-          <ListEmpty message={'Não há jogadores nesse time!'} />
-        )}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={[
-          { paddingBottom: 100 },
-          players.length === 0 && { flex: 1 },
-        ]}
-      />
+      {!loading ? (
+        <FlatList
+          data={players}
+          keyExtractor={(item) => item.name}
+          renderItem={({ item }) => (
+            <PlayerCard
+              name={item.name}
+              onRemove={() => {
+                handleRemovePlayer(item.name)
+              }}
+            />
+          )}
+          ListEmptyComponent={() => (
+            <ListEmpty message={'Não há jogadores nesse time!'} />
+          )}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={[
+            { paddingBottom: 100 },
+            players.length === 0 && { flex: 1 },
+          ]}
+        />
+      ) : (
+        <Loading />
+      )}
 
       <Button
         title="Remover Time"
